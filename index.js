@@ -56,8 +56,29 @@ async function run() {
       res.send(result);
     });
 
-    //service booked korar jonno
-    app.get("/bookingservice", async (req, res) => {});
+    // Service booked গুলো fetch করার জন্য (userEmail দিয়ে filter)
+    app.get("/bookingservice", async (req, res) => {
+      try {
+        const email = req.query.email;
+        if (!email) {
+          return res
+            .status(400)
+            .send({ message: "Email query parameter is required" });
+        }
+
+        const query = { userEmail: email };
+        const bookings = await bookingcollection.find(query).toArray();
+
+        if (bookings.length === 0) {
+          return res.send({ message: "No bookings found", bookings: [] });
+        }
+
+        res.send({ bookings });
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+        res.status(500).send({ message: "Internal server error" });
+      }
+    });
 
     // Client (React frontend) থেকে পাঠানো service id দিয়ে MongoDB-র serviceCollection থেকে একটি নির্দিষ্ট সার্ভিসের তথ্য বের করে দেয়।
 
@@ -65,20 +86,48 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const service = await servicecollection.findOne(query);
-      if (!service) {
-        return res.status(404).send({ message: "Service not found" });
-      }
+
       res.send(service);
     });
 
     //bookingdata onno ekta route e dekhanor jonno
     app.get("/showbookingservice", async (req, res) => {
-      const email = req.params.emmail;
+      const email = req.query.email;
       const query = { userEmail: email };
       const result = await bookingcollection.find(query).toArray();
-      if (bookings.length === 0) {
+      if (bookingcollection.length === 0) {
         return res.send({ message: "No bookings found", bookings: [] });
       }
+      res.send(result);
+    });
+    // সার্ভিস প্রোভাইডার হিসেবে যেগুলো সার্ভিস করতে হবে, সেগুলো দেখাবে
+    app.get("/servicetodo", async (req, res) => {
+      const email = req.query.email;
+
+      if (!email) {
+        return res.status(400).send({ message: "Provider email is required" });
+      }
+
+      try {
+        const query = { providerEmail: email };
+        const result = await bookingcollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching todo services:", error);
+        res.status(500).send({ message: "Internal server error" });
+      }
+    });
+
+    //for searching//
+    app.get("/search", async (req, res) => {
+      const { searchparams } = req.query;
+      let query = {};
+      if (searchparams) {
+        query = {
+          serviceName: { $regex: searchparams, $options: "i" },
+        };
+      }
+      const result = await servicecollection.find(query).toArray();
       res.send(result);
     });
 
@@ -105,6 +154,25 @@ async function run() {
       const updatedoc = { $set: updated };
       const result = await servicecollection.updateOne(filter, updatedoc);
       res.send(result);
+    });
+    app.patch("/bookingstatus/:id", async (req, res) => {
+      const id = req.params.id;
+      const { serviceStatus } = req.body;
+
+      try {
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            serviceStatus: serviceStatus,
+          },
+        };
+
+        const result = await bookingcollection.updateOne(filter, updateDoc);
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating service status:", error);
+        res.status(500).send({ error: "Failed to update service status" });
+      }
     });
 
     //delete er jonno
