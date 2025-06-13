@@ -88,14 +88,15 @@ async function run() {
     // Service booked গুলো fetch করার জন্য (userEmail দিয়ে filter)
     app.get("/bookingservice", async (req, res) => {
       try {
-        const email = req.query.email;
-        if (!email) {
+        const Email = req.query.email;
+
+        if (!Email) {
           return res
             .status(400)
             .send({ message: "Email query parameter is required" });
         }
 
-        const query = { userEmail: email };
+        const query = { userEmail: Email };
         const bookings = await bookingcollection.find(query).toArray();
 
         if (bookings.length === 0) {
@@ -120,11 +121,17 @@ async function run() {
     });
 
     //bookingdata onno ekta route e dekhanor jonno
-    app.get("/showbookingservice", async (req, res) => {
-      const email = req.query.email;
-      const query = { userEmail: email };
+    app.get("/showbookingservice", verifyfirebasetoken, async (req, res) => {
+      const queryemail = req.query.email;
+      const { email, uid } = req.decodedtoken;
+
+      if (queryemail !== email) {
+        console.log("not match email");
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const query = { userEmail: queryemail };
       const result = await bookingcollection.find(query).toArray();
-      if (bookingcollection.length === 0) {
+      if (result.length === 0) {
         return res.send({ message: "No bookings found", bookings: [] });
       }
       res.send(result);
