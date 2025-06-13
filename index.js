@@ -7,6 +7,14 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 require("dotenv").config();
+var admin = require("firebase-admin");
+
+var serviceAccount = require("./homeservice-38fc3-firebase-adminsdk-fbsvc-1ada473912.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
 // // console.log("DB USER:", process.env.DB_USER);
 // // console.log("DB PASS:", process.env.DB_PASS);
 
@@ -31,6 +39,27 @@ const client = new MongoClient(uri, {
   },
 });
 
+// verifyfirebasetoken//
+const verifyfirebasetoken = async (req, res, next) => {
+  const authheader = req.headers.authorization;
+  console.log("veryfytoken", authheader);
+  if (!authheader || !authheader.startsWith("Bearer ")) {
+    console.log("notauthheader");
+    return res.status(401).send({ message: "unauthorizwd token" });
+  }
+  const token = authheader.split(" ")[1];
+
+  try {
+    const decodedtoken = await admin.auth().verifyIdToken(token);
+    req.decodedtoken = decodedtoken;
+    console.log("token in the middaleware", decodedtoken);
+
+    next();
+  } catch (error) {
+    console.log("error in catch");
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+};
 async function run() {
   try {
     const database = client.db("homeservice");
@@ -141,8 +170,14 @@ async function run() {
     });
     //client side theke add korar jonno//
 
-    app.post("/addservice", async (req, res) => {
+    app.post("/addservice", verifyfirebasetoken, async (req, res) => {
       const data = req.body;
+      // console.log(req.headers);
+      const { email, uid } = req.decodedtoken;
+      if (data.providerEmail !== email) {
+        console.log("not match email");
+        return res.status(403).send({ message: "forbidden access" });
+      }
       const result = await servicecollection.insertOne(data);
       res.send(result);
     });
