@@ -174,6 +174,7 @@ async function run() {
       const data = req.body;
       // console.log(req.headers);
       const { email, uid } = req.decodedtoken;
+
       if (data.providerEmail !== email) {
         console.log("not match email");
         return res.status(403).send({ message: "forbidden access" });
@@ -182,9 +183,18 @@ async function run() {
       res.send(result);
     });
     //update er jonno
-    app.put("/updateservice/:id", async (req, res) => {
+    app.put("/updateservice/:id", verifyfirebasetoken, async (req, res) => {
       const id = req.params.id;
       const updated = req.body;
+      const emailFromToken = req.decodedtoken.email;
+
+      updated.providerEmail = emailFromToken;
+      const { email, uid } = req.decodedtoken;
+      if (updated.providerEmail !== email) {
+        console.log("not match email");
+        return res.status(403).send({ message: "forbidden access" });
+      }
+
       const filter = { _id: new ObjectId(id) };
       const updatedoc = { $set: updated };
       const result = await servicecollection.updateOne(filter, updatedoc);
