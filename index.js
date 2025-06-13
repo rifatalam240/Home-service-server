@@ -222,8 +222,19 @@ async function run() {
 
     //delete er jonno
 
-    app.delete("/deleteservice/:id", async (req, res) => {
+    app.delete("/deleteservice/:id", verifyfirebasetoken, async (req, res) => {
       const id = req.params.id;
+      const { email } = req.decodedtoken;
+      const service = await servicecollection.findOne({
+        _id: new ObjectId(id),
+      });
+      if (!service) {
+        return res.status(404).send({ message: "Service not found" });
+      }
+      if (service.providerEmail !== email) {
+        console.log("not match email");
+        return res.status(403).send({ message: "forbidden access" });
+      }
       const result = await servicecollection.deleteOne({
         _id: new ObjectId(id),
       });
