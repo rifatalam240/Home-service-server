@@ -137,15 +137,19 @@ async function run() {
       res.send(result);
     });
     // সার্ভিস প্রোভাইডার হিসেবে যেগুলো সার্ভিস করতে হবে, সেগুলো দেখাবে
-    app.get("/servicetodo", async (req, res) => {
-      const email = req.query.email;
-
-      if (!email) {
+    app.get("/servicetodo", verifyfirebasetoken, async (req, res) => {
+      const queryemail = req.query.email;
+      const { email } = req.decodedtoken;
+      if (queryemail !== email) {
+        console.log("not match email");
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      if (!queryemail) {
         return res.status(400).send({ message: "Provider email is required" });
       }
 
       try {
-        const query = { providerEmail: email };
+        const query = { providerEmail: queryemail };
         const result = await bookingcollection.find(query).toArray();
         res.send(result);
       } catch (error) {
@@ -207,9 +211,9 @@ async function run() {
       const result = await servicecollection.updateOne(filter, updatedoc);
       res.send(result);
     });
-    app.patch("/bookingstatus/:id", async (req, res) => {
+    app.patch("/bookingstatus/:id", verifyfirebasetoken,async (req, res) => {
       const id = req.params.id;
-      const { serviceStatus } = req.body;
+      const { serviceStatus, } = req.body;
 
       try {
         const filter = { _id: new ObjectId(id) };
