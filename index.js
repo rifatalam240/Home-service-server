@@ -79,8 +79,14 @@ async function run() {
 
     //nijer service dekhar jonno//
     app.get("/userservice", async (req, res) => {
-      const email = req.query.email;
-      const query = { providerEmail: email };
+      const queryemail = req.query.email;
+      const { email, uid } = req.decodedtoken;
+
+      if (queryemail !== email) {
+        console.log("not match email");
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const query = { providerEmail: queryemail };
       const result = await servicecollection.find(query).toArray();
       res.send(result);
     });
@@ -211,9 +217,19 @@ async function run() {
       const result = await servicecollection.updateOne(filter, updatedoc);
       res.send(result);
     });
-    app.patch("/bookingstatus/:id", verifyfirebasetoken,async (req, res) => {
+    app.patch("/bookingstatus/:id", verifyfirebasetoken, async (req, res) => {
       const id = req.params.id;
-      const { serviceStatus, } = req.body;
+      const { serviceStatus } = req.body;
+
+      const update = req.body;
+      const emailFromToken = req.decodedtoken.email;
+
+      update.providerEmail = emailFromToken;
+      const { email, uid } = req.decodedtoken;
+      if (update.providerEmail !== email) {
+        console.log("not match email");
+        return res.status(403).send({ message: "forbidden access" });
+      }
 
       try {
         const filter = { _id: new ObjectId(id) };
