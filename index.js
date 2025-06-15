@@ -78,7 +78,7 @@ async function run() {
     });
 
     //nijer service dekhar jonno//
-    app.get("/userservice", async (req, res) => {
+    app.get("/userservice", verifyfirebasetoken, async (req, res) => {
       const queryemail = req.query.email;
       const { email, uid } = req.decodedtoken;
 
