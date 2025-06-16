@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
@@ -6,7 +7,7 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-require("dotenv").config();
+
 var admin = require("firebase-admin");
 
 var serviceAccount = require("./homeservice-38fc3-firebase-adminsdk-fbsvc-1ada473912.json");
@@ -14,18 +15,6 @@ var serviceAccount = require("./homeservice-38fc3-firebase-adminsdk-fbsvc-1ada47
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
-
-// // console.log("DB USER:", process.env.DB_USER);
-// // console.log("DB PASS:", process.env.DB_PASS);
-
-// const express = require("express");
-
-// const cors = require("cors");
-
-// const app = express();
-// const port = process.env.PORT || 3000;
-
-// app.use(cors());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.at4rpkk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -42,9 +31,9 @@ const client = new MongoClient(uri, {
 // verifyfirebasetoken//
 const verifyfirebasetoken = async (req, res, next) => {
   const authheader = req.headers.authorization;
-  console.log("veryfytoken", authheader);
+  // console.log("veryfytoken", authheader);
   if (!authheader || !authheader.startsWith("Bearer ")) {
-    console.log("notauthheader");
+    // console.log("notauthheader");
     return res.status(401).send({ message: "unauthorizwd token" });
   }
   const token = authheader.split(" ")[1];
@@ -52,11 +41,11 @@ const verifyfirebasetoken = async (req, res, next) => {
   try {
     const decodedtoken = await admin.auth().verifyIdToken(token);
     req.decodedtoken = decodedtoken;
-    console.log("token in the middaleware", decodedtoken);
+    // console.log("token in the middaleware", decodedtoken);
 
     next();
   } catch (error) {
-    console.log("error in catch");
+    // console.log("error in catch");
     return res.status(401).send({ message: "unauthorized access" });
   }
 };
@@ -83,7 +72,7 @@ async function run() {
       const { email, uid } = req.decodedtoken;
 
       if (queryemail !== email) {
-        console.log("not match email");
+        // console.log("not match email");
         return res.status(403).send({ message: "forbidden access" });
       }
       const query = { providerEmail: queryemail };
@@ -91,7 +80,6 @@ async function run() {
       res.send(result);
     });
 
-    // Service booked গুলো fetch করার জন্য (userEmail দিয়ে filter)
     app.get("/bookingservice", async (req, res) => {
       try {
         const Email = req.query.email;
@@ -116,8 +104,6 @@ async function run() {
       }
     });
 
-    // Client (React frontend) থেকে পাঠানো service id দিয়ে MongoDB-র serviceCollection থেকে একটি নির্দিষ্ট সার্ভিসের তথ্য বের করে দেয়।
-
     app.get("/service/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -132,7 +118,7 @@ async function run() {
       const { email, uid } = req.decodedtoken;
 
       if (queryemail !== email) {
-        console.log("not match email");
+        // console.log("not match email");
         return res.status(403).send({ message: "forbidden access" });
       }
       const query = { userEmail: queryemail };
@@ -142,12 +128,11 @@ async function run() {
       }
       res.send(result);
     });
-    // সার্ভিস প্রোভাইডার হিসেবে যেগুলো সার্ভিস করতে হবে, সেগুলো দেখাবে
     app.get("/servicetodo", verifyfirebasetoken, async (req, res) => {
       const queryemail = req.query.email;
       const { email } = req.decodedtoken;
       if (queryemail !== email) {
-        console.log("not match email");
+        // console.log("not match email");
         return res.status(403).send({ message: "forbidden access" });
       }
       if (!queryemail) {
@@ -193,7 +178,7 @@ async function run() {
       const { email, uid } = req.decodedtoken;
 
       if (data.providerEmail !== email) {
-        console.log("not match email");
+        // console.log("not match email");
         return res.status(403).send({ message: "forbidden access" });
       }
       const result = await servicecollection.insertOne(data);
@@ -208,7 +193,7 @@ async function run() {
       updated.providerEmail = emailFromToken;
       const { email, uid } = req.decodedtoken;
       if (updated.providerEmail !== email) {
-        console.log("not match email");
+        // console.log("not match email");
         return res.status(403).send({ message: "forbidden access" });
       }
 
@@ -227,7 +212,7 @@ async function run() {
       update.providerEmail = emailFromToken;
       const { email, uid } = req.decodedtoken;
       if (update.providerEmail !== email) {
-        console.log("not match email");
+        // console.log("not match email");
         return res.status(403).send({ message: "forbidden access" });
       }
 
@@ -259,7 +244,7 @@ async function run() {
         return res.status(404).send({ message: "Service not found" });
       }
       if (service.providerEmail !== email) {
-        console.log("not match email");
+        // console.log("not match email");
         return res.status(403).send({ message: "forbidden access" });
       }
       const result = await servicecollection.deleteOne({
@@ -269,9 +254,9 @@ async function run() {
     });
 
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
@@ -284,3 +269,4 @@ run().catch(console.dir);
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+

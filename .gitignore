@@ -1,3 +1,4 @@
 node_modules/
 .env
 homeservice-38fc3-firebase-adminsdk-fbsvc-1ada473912.json
+.vercel
