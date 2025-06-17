@@ -5,15 +5,29 @@ const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://peppy-mousse-674e6f.netlify.app","http://localhost:5173"],
+  })
+);
 app.use(express.json());
 
 var admin = require("firebase-admin");
 
-var serviceAccount = require("./homeservice-38fc3-firebase-adminsdk-fbsvc-1ada473912.json");
-
+// ...existing code...
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+    privateKeyId: process.env.FIREBASE_PRIVATE_KEY_ID,
+  }),
+  clientId: process.env.FIREBASE_CLIENT_ID,
+  authUri: process.env.FIREBASE_AUTH_URI,
+  tokenUri: process.env.FIREBASE_TOKEN_URI,
+  authProviderX509CertUrl: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
+  clientC509CertUrl: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+  universeDomain: process.env.FIREBASE_UNIVERSE_DOMAIN,
 });
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -253,15 +267,12 @@ async function run() {
       res.send(result);
     });
 
-    // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
-    // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
   } finally {
-    // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
