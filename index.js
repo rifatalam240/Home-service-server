@@ -7,7 +7,11 @@ const port = process.env.PORT || 3000;
 
 app.use(
   cors({
-    origin: ["https://peppy-mousse-674e6f.netlify.app","http://localhost:5173"],
+    origin: [
+      "https://peppy-mousse-674e6f.netlify.app",
+      "http://localhost:5173",
+      "https://home-services-dusky.vercel.app",
+    ],
   })
 );
 app.use(express.json());
@@ -70,7 +74,11 @@ async function run() {
     const bookingcollection = database.collection("bookings");
 
     app.get("/service", async (req, res) => {
-      const result = await servicecollection.find().limit(6).toArray();
+      const result = await servicecollection
+        .find()
+        .sort({ _id: -1 })
+        .limit(8)
+        .toArray();
       res.send(result);
     });
 
@@ -280,4 +288,3 @@ run().catch(console.dir);
 app.listen(port, () => {
   console.log(`Server is Running on port ${port}`);
 });
-
