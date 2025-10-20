@@ -16,9 +16,7 @@ app.use(
 );
 app.use(express.json());
 
-var admin = require("firebase-admin");
-
-// ...existing code...
+var admin = require("firebase-admin")
 admin.initializeApp({
   credential: admin.credential.cert({
     projectId: process.env.FIREBASE_PROJECT_ID,
